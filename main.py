@@ -8,16 +8,26 @@ import tkinter as tk
 
 
 def show_car():
-    # Read the text box and remove spaces at either end.
     car_name = car_entry.get().strip()
+    mileage_text = mileage_entry.get().strip()
 
-    # Show a helpful message if the text box is empty.
     if not car_name:
-        result_label.config(text="Enter Car Here")
+        result_label.config(text="Car Name")
         return
 
-    # Update the result label with the entered name.
-    result_label.config(text=f"Shitbox: {car_name}")
+    # Convert the text to an integer.
+    # Reject letters, decimal numbers, and empty input.
+    try:
+        mileage = int(mileage_text)
+    except ValueError:
+        result_label.config(text="Enter mileage")
+        return
+
+    if mileage < 0:
+        result_label.config(text="Mileage can't be negative dumbass")
+        return
+
+    result_label.config(text=f"Car: {car_name}\nMileage: {mileage:,} miles")
 
 
 # ==================================================
@@ -27,7 +37,7 @@ def show_car():
 
 window = tk.Tk()
 window.title("Auto Maintenance")
-window.geometry("450x300")
+window.geometry("450x400")
 
 
 # ==================================================
@@ -60,6 +70,12 @@ car_entry.pack(pady=5)
 # Put the typing cursor in this box when the app opens.
 car_entry.focus_set()
 
+# CURRENT MILEAGE INPUT
+mileage_label = tk.Label(window, text="Current mileage:")
+mileage_label.pack(pady=5)
+
+mileage_entry = tk.Entry(window, width=35)
+mileage_entry.pack(pady=5)
 
 # ==================================================
 # 5. BUTTON
