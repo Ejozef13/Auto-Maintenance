@@ -1,10 +1,22 @@
 import tkinter as tk
 
+import json
+from pathlib import Path
+import tkinter as tk
+
+# Keep the data file beside main.py, regardless of where you run Python.
+DATA_FILE = Path(__file__).resolve().parent / "car_data.json"
 
 # ==================================================
 # 1. BUTTON ACTIONS
 # Functions here describe what happens when you click.
 # ==================================================
+
+
+def clear_inputs():
+    car_entry.delete(0, tk.END)
+    mileage_entry.delete(0, tk.END)
+    car_entry.focus_set()
 
 
 def show_car():
@@ -29,6 +41,37 @@ def show_car():
 
     result_label.config(text=f"Car: {car_name}\nMileage: {mileage:,} miles")
 
+    # A dictionary stores values under descriptive keys.
+    car_data = {
+        "name": car_name,
+        "mileage": mileage,
+    }
+
+    # Write the dictionary as readable JSON text.
+    try:
+        with DATA_FILE.open("w", encoding="utf-8") as file:
+            json.dump(car_data, file, indent=4)
+    except OSError:
+        result_label.config(text="Car could not be saved, Check folder permissions.")
+        return
+
+    result_label.config(text=f"{car_name}\n {mileage:,} miles")
+    clear_inputs()
+
+
+def delete_car():
+    try:
+        DATA_FILE.unlink()
+    except FileNotFoundError:
+        result_label.config(text="There is no saved car to delete")
+    except OSError:
+        result_label.config(text="Could not delete the saved car")
+        return
+    else:
+        result_label.config(text="Saved car deleted")
+
+    clear_inputs()
+
 
 # ==================================================
 # 2. MAIN WINDOW
@@ -37,7 +80,7 @@ def show_car():
 
 window = tk.Tk()
 window.title("Auto Maintenance")
-window.geometry("450x400")
+window.geometry("450x450")
 
 
 # ==================================================
@@ -84,11 +127,17 @@ mileage_entry.pack(pady=5)
 
 show_button = tk.Button(
     window,
-    text="Show car",
+    text="Save Car",
     command=show_car,
 )
 show_button.pack(pady=10)
 
+delete_button = tk.Button(
+    window,
+    text="Delete saved car",
+    command=delete_car,
+)
+delete_button.pack(pady=5)
 
 # ==================================================
 # 6. RESULT
@@ -109,5 +158,39 @@ result_label.pack(pady=10)
 # Keep this after the code that creates the widgets.
 # It handles clicks, typing, and other window events.
 # ==================================================
+
+# ==================================================
+# LOAD SAVED CAR
+# Run after the widgets exist so we can fill them in.
+# ==================================================
+
+try:
+    with DATA_FILE.open("r", encoding="utf-8") as file:
+        saved_car = json.load(file)
+
+    # Check the data before using it.
+    if not isinstance(saved_car, dict):
+        raise ValueError("Expected a dictionary.")
+
+    saved_name = saved_car.get("name")
+    saved_mileage = saved_car.get("mileage")
+
+    if not isinstance(saved_name, str) or not saved_name.strip():
+        raise ValueError("Invalid car name.")
+
+    if type(saved_mileage) is not int or saved_mileage < 0:
+        raise ValueError("Invalid mileage.")
+
+except FileNotFoundError:
+    # Normal on the first run: there is nothing to load yet.
+    pass
+
+except (OSError, ValueError):
+    result_label.config(text="Could not load saved data. Enter your car again.")
+
+else:
+    car_entry.insert(0, saved_name)
+    mileage_entry.insert(0, str(saved_mileage))
+    result_label.config(text=f"My car: {saved_name}\nMileage: {saved_mileage:,} miles")
 
 window.mainloop()
