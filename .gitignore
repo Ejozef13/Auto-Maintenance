@@ -1,1 +1,11 @@
+# Personal data and the previous good copy
 car_data.json
+garage_data.json
+garage_data.json.bak
+.garage_data.json.*.tmp
+.garage_data.json.bak.*.tmp
+# Python generated files
+__pycache__/
+*.pyc
+# Exported spreadsheets
+*.csv
