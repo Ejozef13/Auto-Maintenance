@@ -1,0 +1,2 @@
+# Optional: PDF manual import. TXT/Markdown, retrieval, chat, and portraits use stdlib.
+pypdf>=5.0,<7

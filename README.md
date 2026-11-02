@@ -2,7 +2,8 @@
 
 A local desktop garage and maintenance log for car enthusiasts. Built with Python's
 Tkinter library, with commented sections to make the project easier to learn and customize.
-No account, subscription, web server, or third-party Python package is required.
+The core tracker needs no account, subscription, web server, or third-party Python package.
+Optional AI features connect to local services; PDF import uses pypdf.
 
 ## Run on CachyOS / Arch Linux
 
@@ -24,6 +25,9 @@ Requires Python 3.10 or newer. Use one running copy of the app per data file.
 
 ## What you can do
 
+- Launch directly in full screen. Press F11 or use the header button to switch
+  between full screen and a regular resizable window. Escape leaves full screen;
+  the Quit button closes the app. Escape still cancels popup forms.
 - Add multiple cars to a garage of selectable car cards.
 - Edit each car's name, odometer, and details such as VIN, engine, or personal notes.
 - Record oil changes, spark plugs, cabin filters, tire rotations, tire replacements,
@@ -43,6 +47,21 @@ appear in the history table. Part locations are illustrative and vary by car.
 This version records maintenance, rather than calculating manufacturer service schedules.
 Mileage is in miles; costs are in USD. Blank costs are stored as zero.
 On smaller displays, use the scrollbars to reach the full diagram, table, and garage.
+
+## AI Garage
+
+Open a car and choose **AI Garage** for:
+
+- A conversational Ollama assistant with the selected car's recent maintenance history.
+- PDF/TXT/Markdown manual import and local RAG with page references and visible excerpts.
+- Optional SearXNG web search with source URLs, off by default.
+- ComfyUI-generated car portraits, saved locally and displayed on garage cards.
+- Configurable model and server URLs, an Ollama connection check, and workflow import.
+
+See [AI_SETUP.md](AI_SETUP.md) for setup, the included SDXL example workflow,
+model recommendations for a 16 GB GPU, privacy details, and current limitations.
+The application does not bundle or install model weights. Generated advice and
+vehicle details need checking against the matching manual.
 
 ## Saving and your previous version
 
@@ -104,7 +123,7 @@ python3 -m unittest discover -s tests -v
 
 Storage tests do not need a display. GUI tests need a running desktop (`DISPLAY`
 on Linux); otherwise they are explicitly skipped. They use temporary data files,
-not your real garage. The full suite currently contains 18 tests.
+not your real garage. The suite includes offline AI service tests; GUI tests are skipped without a display.
 
 Manual check: add two cars, log different services, switch between them, close and
 reopen the app, then check that each car retained only its own records. Try an invalid

@@ -90,6 +90,7 @@ class MaintenanceApp(tk.Tk):
         self.geometry("1180x820")
         self.minsize(820, 600)
         self.configure(bg=BG)
+        self.ai_window = None
         self.selected_id = None
         self.sort_column = "date"
         self.sort_descending = True
@@ -112,6 +113,12 @@ class MaintenanceApp(tk.Tk):
         self.header.pack(fill="x")
         ttk.Label(self.header, text="AUTO / MAINTENANCE", style="Brand.TLabel").pack(side="left")
         ttk.Button(self.header, text="My garage", command=self.show_garage).pack(side="right")
+        self.fullscreen_button = ttk.Button(self.header, command=self.toggle_fullscreen)
+        self.fullscreen_button.pack(side="right", padx=8)
+        ttk.Button(self.header, text="Quit", command=self.destroy).pack(side="right")
+        self.bind("<F11>", self.toggle_fullscreen)
+        self.bind("<Escape>", self.exit_fullscreen)
+        self.set_fullscreen(True)
         self.content = ttk.Frame(self, padding=(24, 0, 24, 12))
         self.content.pack(fill="both", expand=True)
         self.status = tk.StringVar(value="Saved locally | Miles | Costs in USD | One app window at a time")
@@ -119,6 +126,19 @@ class MaintenanceApp(tk.Tk):
         self.show_garage()
         if imported:
             self.status.set("Imported your previous car. The original car_data.json was left unchanged.")
+
+    def set_fullscreen(self, enabled):
+        self.attributes("-fullscreen", enabled)
+        self.fullscreen_button.configure(
+            text="Windowed (F11)" if enabled else "Full screen (F11)")
+
+    def toggle_fullscreen(self, event=None):
+        self.set_fullscreen(not self.attributes("-fullscreen"))
+        return "break"
+
+    def exit_fullscreen(self, event=None):
+        self.set_fullscreen(False)
+        return "break"
 
     def configure_theme(self):
         style = ttk.Style(self)
@@ -186,7 +206,16 @@ class MaintenanceApp(tk.Tk):
             card.grid(row=index // 2, column=index % 2, sticky="nsew", padx=6, pady=8)
             picture = tk.Canvas(card, width=270, height=105, bg=PANEL, highlightthickness=0)
             picture.pack(fill="x")
-            self.draw_side_car(picture)
+            import hashlib
+            key = hashlib.sha256(car["id"].encode()).hexdigest()
+            portrait_path = Path(self.store.path).parent / "ai_data" / (key + ".png")
+            try:
+                image = tk.PhotoImage(file=str(portrait_path))
+                factor = max(1, (image.width() + 269) // 270, (image.height() + 104) // 105)
+                picture.portrait_image = image.subsample(factor, factor)
+                picture.create_image(135, 52, image=picture.portrait_image)
+            except tk.TclError:
+                self.draw_side_car(picture)
             tk.Label(card, text=car["name"], bg=PANEL, fg=TEXT, font=(FONT_FAMILY, 15, "bold"),
                      wraplength=300, justify="left").pack(anchor="w", pady=(10, 6))
             total = sum(r["cost_cents"] for r in car["records"])
@@ -260,6 +289,7 @@ class MaintenanceApp(tk.Tk):
         actions.pack(fill="x", pady=(6, 12))
         ttk.Button(actions, text="+ Add maintenance", command=self.record_dialog).pack(side="left")
         ttk.Button(actions, text="Export history to CSV", command=self.export_csv).pack(side="left", padx=8)
+        ttk.Button(actions, text="AI Garage", command=self.open_ai_garage).pack(side="left", padx=8)
         self.tabs = ttk.Notebook(self.content)
         self.tabs.pack(fill="both", expand=True)
         diagram = ttk.Frame(self.tabs)
@@ -269,6 +299,17 @@ class MaintenanceApp(tk.Tk):
         self.build_diagram(diagram, car)
         self.build_history(history)
         self.tabs.select(tab)
+
+    def open_ai_garage(self):
+        # One AI session at a time; closing it releases pending result handlers.
+        if self.ai_window is not None and self.ai_window.winfo_exists():
+            self.ai_window.close()
+        from ai_ui import AIGarageWindow
+        try:
+            self.ai_window = AIGarageWindow(
+                self, self.current_car(), Path(self.store.path).parent / "ai_data")
+        except (ValueError, OSError) as error:
+            messagebox.showerror("AI Garage", str(error), parent=self)
 
     # ==================================================
     # 6. SERVICE FORMS — add/edit without losing history

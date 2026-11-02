@@ -9,3 +9,6 @@ __pycache__/
 *.pyc
 # Exported spreadsheets
 *.csv
+# Imported manuals, AI settings, generated portraits, local workflows
+ai_data/
+.venv/
